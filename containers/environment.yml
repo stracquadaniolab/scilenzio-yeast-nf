@@ -1,0 +1,25 @@
+name: scilenzio-yeast-nf
+channels:
+  - defaults
+  - bioconda
+  - conda-forge
+dependencies:
+  - git
+  - python>=3.8
+  - docopt
+  - conda-forge::r-base
+  - conda-forge::r-tidyverse
+  - conda-forge::r-dplyr
+  - conda-forge::r-docopt
+  - conda-forge::r-cowplot
+  - conda-forge::r-paletteer
+  - conda-forge::r-ggrepel
+  - bioconda::fastp
+  - bioconda::star
+  - bioconda::samtools
+  - bioconda::bcftools
+  - bioconda::bedtools
+  - bioconda::salmon
+  - bioconda::bioconductor-tximport
+  - bioconda::seqkit
+  - bioconda::bioconductor-deseq2

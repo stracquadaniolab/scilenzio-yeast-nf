@@ -1,0 +1,9 @@
+work/
+results/
+logs/
+.DS_Store
+*.pyc
+.vscode
+.nextflow*
+bin/test_*
+data/BY4742-archive/
