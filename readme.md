@@ -1,6 +1,6 @@
 # scilenzio-yeast-nf
 
-![](https://img.shields.io/badge/current_version-0.0.0-blue)
+![](https://img.shields.io/badge/current_version-0.1.0-blue)
 ![](https://github.com/stracquadaniolab/scilenzio-yeast-nf/workflows/build/badge.svg)
 ## Overview
 Analysis of transcriptional repression in synthetic yeast chromosome using RNA-seq data.
