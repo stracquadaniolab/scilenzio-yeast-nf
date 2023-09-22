@@ -42,6 +42,8 @@ process TRIM_READS {
 
     tag "${sample}"
 
+    maxForks 1
+
     publishDir "${params.resultsDir}/qc/reads", pattern: "*.json", mode: 'copy', overwrite: true
     publishDir "${params.resultsDir}/qc/reads", pattern: "*.html", mode: 'copy', overwrite: true
 
@@ -76,6 +78,8 @@ process GENERATE_GENOME_INDEX {
 
     tag "genome_index"
 
+    maxForks 1
+
     input:
         path(genome_fasta)
         path(annotation_gff)
@@ -108,6 +112,8 @@ process ALIGN_READS {
 
     tag "${sample}"
 
+    maxForks 1
+
     input:
         path(genome_index)
         tuple val(sample), path(trimmed_read1), path(trimmed_read2)
@@ -139,6 +145,8 @@ process ALIGN_READS {
 
 process GFFREAD_GET_WT_TRANSCRIPTOME {
 
+    maxForks 1
+
     publishDir "${params.resultsDir}/wt-syn-transcriptome/", mode: 'copy', overwrite: true
 
     input:
@@ -169,6 +177,8 @@ process GFFREAD_GET_WT_TRANSCRIPTOME {
 
 process SALMON_INDEX {
 
+    maxForks 1
+
     input: 
         path(transcriptome)
         path(genome)
@@ -190,7 +200,6 @@ process SALMON_INDEX {
             --transcripts gentrome.fa.gz \\
             --decoys decoys.txt \\
             --index transcriptome-index \\
-            --keepDuplicates \\
             ${params.salmon.index.args}
     """
 
@@ -204,6 +213,8 @@ process SALMON_INDEX {
 process SALMON_QUANT {
 
     tag "${sample}"
+
+    maxForks 1
 
     publishDir "${params.resultsDir}/salmon-quant/", mode: 'copy', overwrite: true
 
