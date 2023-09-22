@@ -1,0 +1,10 @@
+Sample,Reference,Condition,read1,read2
+x-dCre-Sir2-plus4,syn_BY4742,dCre-sir2_induced,data/reads/x-dCre-Sir2-plus4_R1_001.fastq.gz,data/reads/x-dCre-Sir2-plus4_R2_001.fastq.gz
+x-dCre-Sir2-plus5,syn_BY4742,dCre-sir2_induced,data/reads/x-dCre-Sir2-plus5_R1_001.fastq.gz,data/reads/x-dCre-Sir2-plus5_R2_001.fastq.gz
+x-dCre-Sir2-plus6,syn_BY4742,dCre-sir2_induced,data/reads/x-dCre-Sir2-plus6_R1_001.fastq.gz,data/reads/x-dCre-Sir2-plus6_R2_001.fastq.gz
+x-dCre-Sir2-4,syn_BY4742,uninduced,data/reads/x-dCre-Sir2-4_R1_001.fastq.gz,data/reads/x-dCre-Sir2-4_R2_001.fastq.gz
+x-dCre-Sir2-5,syn_BY4742,uninduced,data/reads/x-dCre-Sir2-5_R1_001.fastq.gz,data/reads/x-dCre-Sir2-5_R2_001.fastq.gz
+x-dCre-Sir2-6,syn_BY4742,uninduced,data/reads/x-dCre-Sir2-6_R1_001.fastq.gz,data/reads/x-dCre-Sir2-6_R2_001.fastq.gz
+x-dCre-plus4,syn_BY4742,dCre_induced,data/reads/x-dCre-plus4_R1_001.fastq.gz,data/reads/x-dCre-plus4_R2_001.fastq.gz
+x-dCre-plus5,syn_BY4742,dCre_induced,data/reads/x-dCre-plus5_R1_001.fastq.gz,data/reads/x-dCre-plus5_R2_001.fastq.gz
+x-dCre-plus6,syn_BY4742,dCre_induced,data/reads/x-dCre-plus6_R1_001.fastq.gz,data/reads/x-dCre-plus6_R2_001.fastq.gz

@@ -7,3 +7,6 @@ logs/
 .nextflow*
 bin/test_*
 data/BY4742-archive/
+data/reads
+data/genome/BY4742-genome
+data/genome/syn-yeast-genome

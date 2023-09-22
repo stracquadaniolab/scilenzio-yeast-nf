@@ -1,38 +1,42 @@
 // enabling nextflow DSL v2
 nextflow.enable.dsl=2
 
-process BUILD_REFERENCE_TRANSCRIPTOME {
+// process BUILD_REFERENCE_TRANSCRIPTOME {
 
-    publishDir "${params.resultsDir}/new-reference", mode: 'copy', overwrite: true
+//     publishDir "${params.resultsDir}/combined-genome", mode: 'copy', overwrite: true
 
-    input:
-        path(wt_reference)
-        path(syn_reference)
-        path(wt_gff)
-        path(syn_gff)
+//     input:
+//         path(wt_reference)
+//         path(syn_reference)
+//         path(wt_gff)
+//         path(syn_gff)
 
-    output:
-        path("wt_syn_chr11_ref.fasta"), emit: reference
-        path("wt_syn_chr11_ref.gff"), emit: annotation
+//     output:
+//         path("wt-syn-chr11-ref.fasta"), emit: reference
+//         path("wt-syn-chr11-ref.gff"), emit: annotation
 
-    """
-        # Add "x." prefix to "ID=" to indicate synthetic genes
-        # TODO
+//     """
+//         # Replace fasta header of synthetic reference to "chr111" to indicate synthetic contig
+//         # concatenate wt and synthetic reference (in that order)
+//         cat ${wt_reference} <(sed 's/^>chr11/>chr111/' ${syn_reference}) > wt-syn-chr11-ref.fasta
 
-        # concatenate wt and synthetic reference
-        cat ${wt_reference} ${syn_reference} > wt_syn_chr11_ref.fasta
+//         # Change chromosome and gene names in synthetic GFF
+//         # Replace "chr11" with "chr111" to indicate synthetic chromosome
+//         sed 's/chr11/chr111/g' ${syn_gff} > tmp-syn.gff
+//         # Add "x." prefix to synthetic GFF "ID=" column to indicate synthetic genes
+//         awk -F'\t' -v OFS='\t' '{ sub(/ID=/, "ID=x.", $9); sub(/Name=/, "Name=x.", $9); print }' tmp-syn.gff > modified-syn-chr11.gff
 
-        # concatenate wt and synthetic annotation
-        cat ${wt_gff} ${syn_gff} > wt_syn_chr11_ref.gff
-    """
+//         # concatenate wt and synthetic annotation
+//         cat ${wt_gff} modified-syn-chr11.gff > wt-syn-chr11-ref.gff
+//     """
 
-    stub:
-    """
-        touch wt_syn_chr11_ref.fasta
-        touch wt_syn_chr11_ref.gff
-    """
+//     stub:
+//     """
+//         touch wt-syn-chr11-ref.fasta
+//         touch wt-syn-chr11-ref.gff
+//     """
 
-}
+// }
 
 process TRIM_READS {
 
@@ -65,6 +69,7 @@ process TRIM_READS {
         touch ${read2.simpleName}.trimmed.fastq.gz
         touch ${sample}.fastp.json  
     """
+
 }
 
 process GENERATE_GENOME_INDEX {
@@ -261,8 +266,8 @@ workflow {
                     .splitCsv(header: true)
                     .map{ record -> tuple(record.sample, file(record.read1), file(record.read2)) }
 
-    // build reference
-    BUILD_REFERENCE_TRANSCRIPTOME(file(params.reference.wt), file(params.reference.syn), file(params.annotation.wt), file(params.annotation.syn))
+    // // build reference
+    // BUILD_REFERENCE_TRANSCRIPTOME(file(params.reference.wt), file(params.reference.syn), file(params.annotation.wt), file(params.annotation.syn))
 
     // preprocess reads
     TRIM_READS(samples_ch)
@@ -282,4 +287,17 @@ workflow {
     // summarise transcript-level abundance estimates to gene level
     SUMMARIZE_TO_GENE(samplesheet_file, SALMON_QUANT.out.collect())
     
+}
+
+workflow TEST {
+
+    // sample channels
+    samplesheet_file = file(params.samplesheet)
+    samples_ch = channel.from(samplesheet_file)
+                    .splitCsv(header: true)
+                    .map{ record -> tuple(record.sample, file(record.read1), file(record.read2)) }
+
+    // preprocess reads
+    TRIM_READS(samples_ch)
+
 }
