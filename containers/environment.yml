@@ -14,6 +14,7 @@ dependencies:
   - conda-forge::r-cowplot
   - conda-forge::r-paletteer
   - conda-forge::r-ggrepel
+  - conda-forge::gsl # needed to install bcftools correctly
   - bioconda::fastp
   - bioconda::star
   - bioconda::samtools
@@ -22,4 +23,5 @@ dependencies:
   - bioconda::salmon
   - bioconda::bioconductor-tximport
   - bioconda::seqkit
+  - bioconda::gffread
   - bioconda::bioconductor-deseq2
