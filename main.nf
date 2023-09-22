@@ -78,7 +78,7 @@ process GENERATE_GENOME_INDEX {
 
     input:
         path(genome_fasta)
-        path(annotation_gtf)
+        path(annotation_gff)
 
     output:
         path("genome-index")
@@ -90,7 +90,7 @@ process GENERATE_GENOME_INDEX {
             --runMode genomeGenerate \\
             --genomeDir genome-index \\
             --genomeFastaFiles ${genome_fasta} \\
-            --sjdbGTFfile ${annotation_gtf} \\
+            --sjdbGTFfile ${annotation_gff} \\
             --sjdbOverhang ${params.star.sjdbOverhang} \\
             --genomeSAindexNbases ${params.star.genomeSAindexNbases}
     """
@@ -134,6 +134,37 @@ process ALIGN_READS {
         touch ${sample}.Aligned.sortedByCoord.out.bam
     """
     
+}
+
+
+process GFFREAD_GET_WT_TRANSCRIPTOME {
+
+    publishDir "${params.resultsDir}/wt-syn-transcriptome/", mode: 'copy', overwrite: true
+
+    input:
+        path(genome_fasta)
+        path(annotation_gff)
+
+    output:
+        path("wt-syn-transcriptome.fa"), emit: transcriptome
+        path("wt-syn-transcriptome.gff"), emit: annotation
+
+    script:
+    """
+        gffread \\
+            -g ${genome_fasta} \\
+            -o wt-syn-transcriptome.gff \\
+            -w wt-syn-transcriptome.fa \\
+            -v \\
+            ${annotation_gff}
+    """
+
+    stub:
+    """
+        touch wt-syn-transcriptome.fa
+        touch wt-syn-transcriptome.gff
+    """
+
 }
 
 process SALMON_INDEX {
@@ -207,7 +238,7 @@ process SUMMARIZE_TO_GENE {
 
     input: 
         path(sample_sheet)
-        path(annotation_gtf)
+        path(annotation_gff)
         path(salmon_results, stageAs: 'salmon-quant/quant*.sf')
 
     output:
@@ -264,7 +295,7 @@ workflow {
     samplesheet_file = file(params.samplesheet)
     samples_ch = channel.from(samplesheet_file)
                     .splitCsv(header: true)
-                    .map{ record -> tuple(record.sample, file(record.read1), file(record.read2)) }
+                    .map{ record -> tuple(record.Sample, file(record.read1), file(record.read2)) }
 
     // // build reference
     // BUILD_REFERENCE_TRANSCRIPTOME(file(params.reference.wt), file(params.reference.syn), file(params.annotation.wt), file(params.annotation.syn))
@@ -273,31 +304,16 @@ workflow {
     TRIM_READS(samples_ch)
 
     // perform alignment
-    GENERATE_GENOME_INDEX(BUILD_REFERENCE_TRANSCRIPTOME.out.reference, BUILD_REFERENCE_TRANSCRIPTOME.out.annotation)
-    ALIGN_READS(GENERATE_GENOME_INDEX.out, PREPROCESS_READS.out.trimmed_fastq)
+    GENERATE_GENOME_INDEX(file(params.genome.reference), file(params.genome.annotation))
+    ALIGN_READS(GENERATE_GENOME_INDEX.out, TRIM_READS.out.fastq)
+
+    // generate transcriptome fasta
+    GFFREAD_GET_WT_TRANSCRIPTOME(file(params.genome.reference), file(params.genome.annotation))
 
     // create transcriptome index
-    tx_ref_file = file(params.transcriptome.reference)
-    tx_decoy_file = file(params.transcriptome.decoys)
-    SALMON_INDEX(tx_ref_file, tx_decoy_file)
+    SALMON_INDEX(GFFREAD_GET_WT_TRANSCRIPTOME.out.transcriptome, file(params.genome.reference))
 
     // estimate transcript level abundance
     SALMON_QUANT(SALMON_INDEX.out, TRIM_READS.out.fastq)
-
-    // summarise transcript-level abundance estimates to gene level
-    SUMMARIZE_TO_GENE(samplesheet_file, SALMON_QUANT.out.collect())
-    
-}
-
-workflow TEST {
-
-    // sample channels
-    samplesheet_file = file(params.samplesheet)
-    samples_ch = channel.from(samplesheet_file)
-                    .splitCsv(header: true)
-                    .map{ record -> tuple(record.sample, file(record.read1), file(record.read2)) }
-
-    // preprocess reads
-    TRIM_READS(samples_ch)
 
 }
