@@ -7,7 +7,7 @@ dependencies:
   - git
   - python>=3.8
   - docopt
-  - conda-forge::r-base
+  - conda-forge::r-base>=4.3.1
   - conda-forge::r-tidyverse
   - conda-forge::r-dplyr
   - conda-forge::r-docopt
@@ -21,7 +21,9 @@ dependencies:
   - bioconda::bcftools
   - bioconda::bedtools
   - bioconda::salmon
-  - bioconda::bioconductor-tximport
   - bioconda::seqkit
   - bioconda::gffread
+  - bioconda::bioconductor-tximport
+  - bioconda::bioconductor-genomicfeatures
   - bioconda::bioconductor-deseq2
+  - bioconda::bioconductor-rtracklayer

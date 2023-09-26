@@ -245,28 +245,31 @@ process SALMON_QUANT {
 
 process SUMMARIZE_TO_GENE {
 
-    publishDir "${params.resultsDir}/dataset/", mode: 'copy', overwrite: true
+    publishDir "${params.resultsDir}/tximport/", mode: 'copy', overwrite: true
 
-    input: 
+    input:
         path(sample_sheet)
         path(annotation_gff)
         path(salmon_results, stageAs: 'salmon-quant/quant*.sf')
 
     output:
-        path 'summarized-experiment.rds'
-    
+        path("txi-summarized-experiment.rds")
+
     script:
     """
-        quick-rnaseq-summarize-to-gene.R \\
+        summarize-to-gene.R \\
             ${sample_sheet} \\
-            -c ${params.summarize_to_gene.counts_from_abundance} \\
-            -d ${params.summarize_to_gene.organism_db}
+            --gff ${annotation_gff} \\
+            --quant-dir ${salmon_results} \\
+            --counts-from-abundance ${params.summarize_to_gene.counts_from_abundance} \\
+            --output txi-summarized-experiment.rds
     """
 
     stub:
     """
-    touch summarized-experiment.rds
+        touch txi-summarized-experiment.rds 
     """
+
 }
 
 // TODO
@@ -326,5 +329,12 @@ workflow {
 
     // estimate transcript level abundance
     SALMON_QUANT(SALMON_INDEX.out, TRIM_READS.out.fastq)
+
+}
+
+workflow ANALYSIS {
+
+    // summarise transcript-level abundance estimates to gene level
+    SUMMARIZE_TO_GENE(file(params.samplesheet), file(params.summarize_to_gene.annotation), file(params.summarize_to_gene.quant_dir))
 
 }

@@ -10,3 +10,7 @@ data/BY4742-archive/
 data/reads
 data/genome/BY4742-genome
 data/genome/syn-yeast-genome
+results/salmon-quant
+testdata/salmon-quant
+testdata/split-salmon-quant
+testdata/syn-transcriptome.gff
