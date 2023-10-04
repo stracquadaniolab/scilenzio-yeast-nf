@@ -8,26 +8,26 @@ nextflow.enable.dsl=2
 //     input:
 //         path(wt_reference)
 //         path(syn_reference)
-//         path(wt_gff)
-//         path(syn_gff)
+//         path(wt_annotation)
+//         path(syn_annotation)
 
 //     output:
 //         path("wt-syn-chr11-ref.fasta"), emit: reference
 //         path("wt-syn-chr11-ref.gff"), emit: annotation
 
 //     """
-//         # Replace fasta header of synthetic reference to "chr111" to indicate synthetic contig
+//         # Replace fasta header of synthetic reference to "chr18" to indicate synthetic contig
 //         # concatenate wt and synthetic reference (in that order)
-//         cat ${wt_reference} <(sed 's/^>chr11/>chr111/' ${syn_reference}) > wt-syn-chr11-ref.fasta
+//         cat ${wt_reference} <(sed 's/^>chr11/>chr18/' ${syn_reference}) > wt-syn-chr11-ref.fasta
 
 //         # Change chromosome and gene names in synthetic GFF
-//         # Replace "chr11" with "chr111" to indicate synthetic chromosome
-//         sed 's/chr11/chr111/g' ${syn_gff} > tmp-syn.gff
+//         # Replace "chr11" with "chr18" to indicate synthetic chromosome
+//         sed 's/chr11/chr18/g' ${syn_annotation} > tmp-syn.gff
 //         # Add "x." prefix to synthetic GFF "ID=" column to indicate synthetic genes
 //         awk -F'\t' -v OFS='\t' '{ sub(/ID=/, "ID=x.", $9); sub(/Name=/, "Name=x.", $9); print }' tmp-syn.gff > modified-syn-chr11.gff
 
 //         # concatenate wt and synthetic annotation
-//         cat ${wt_gff} modified-syn-chr11.gff > wt-syn-chr11-ref.gff
+//         cat ${wt_annotation} modified-syn-chr11.gff > wt-syn-chr11-ref.gff
 //     """
 
 //     stub:
@@ -314,12 +314,12 @@ workflow {
     // // build reference
     // BUILD_REFERENCE_TRANSCRIPTOME(file(params.reference.wt), file(params.reference.syn), file(params.annotation.wt), file(params.annotation.syn))
 
-    // preprocess reads
-    TRIM_READS(samples_ch)
+    // // preprocess reads
+    // TRIM_READS(samples_ch)
 
     // perform alignment
-    GENERATE_GENOME_INDEX(file(params.genome.reference), file(params.genome.annotation))
-    ALIGN_READS(GENERATE_GENOME_INDEX.out, TRIM_READS.out.fastq)
+    // GENERATE_GENOME_INDEX(file(params.genome.reference), file(params.genome.annotation))
+    // ALIGN_READS(GENERATE_GENOME_INDEX.out, TRIM_READS.out.fastq)
 
     // generate transcriptome fasta
     GFFREAD_GET_WT_TRANSCRIPTOME(file(params.genome.reference), file(params.genome.annotation))
@@ -327,8 +327,8 @@ workflow {
     // create transcriptome index
     SALMON_INDEX(GFFREAD_GET_WT_TRANSCRIPTOME.out.transcriptome, file(params.genome.reference))
 
-    // estimate transcript level abundance
-    SALMON_QUANT(SALMON_INDEX.out, TRIM_READS.out.fastq)
+    // // estimate transcript level abundance
+    // SALMON_QUANT(SALMON_INDEX.out, TRIM_READS.out.fastq)
 
 }
 
