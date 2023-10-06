@@ -15,6 +15,7 @@ nextflow.enable.dsl=2
 //         path("wt-syn-chr11-ref.fasta"), emit: reference
 //         path("wt-syn-chr11-ref.gff"), emit: annotation
 
+//     script:
 //     """
 //         # Replace fasta header of synthetic reference to "chr18" to indicate synthetic contig
 //         # concatenate wt and synthetic reference (in that order)
@@ -38,11 +39,35 @@ nextflow.enable.dsl=2
 
 // }
 
+// process BUILD_REFERENCE_GENOME {
+
+//     publishDir "${params.resultsDir}/combined-genome", mode: 'copy', overwrite: true
+
+//     input:
+//         path(annotation_dir)
+//         path(wt_reference)
+//         path(syn_reference)
+//         path(syn_annotation)
+
+//     output:
+//         path("wt-syn-chr11-ref.fasta"), emit: reference
+//         path("wt-syn-chr11-ref.gff"), emit: annotation
+
+//     script:
+//     """
+//     """
+
+//     stub:
+//     """
+//         touch wt-syn-chr11-ref.fasta
+//         touch wt-syn-chr11-ref.gff
+//     """
+
+// }
+
 process TRIM_READS {
 
     tag "${sample}"
-
-    maxForks 1
 
     publishDir "${params.resultsDir}/qc/reads", pattern: "*.json", mode: 'copy', overwrite: true
     publishDir "${params.resultsDir}/qc/reads", pattern: "*.html", mode: 'copy', overwrite: true
@@ -78,8 +103,6 @@ process GENERATE_GENOME_INDEX {
 
     tag "genome_index"
 
-    maxForks 1
-
     input:
         path(genome_fasta)
         path(annotation_gff)
@@ -89,6 +112,7 @@ process GENERATE_GENOME_INDEX {
 
     script:
     """
+        mkdir genome-index
         STAR \\
             --runThreadN ${task.cpus} \\
             --runMode genomeGenerate \\
@@ -111,8 +135,6 @@ process ALIGN_READS {
     publishDir "${params.resultsDir}/bams/", mode: 'copy', overwrite: true
 
     tag "${sample}"
-
-    maxForks 1
 
     input:
         path(genome_index)
@@ -145,8 +167,6 @@ process ALIGN_READS {
 
 process GFFREAD_GET_WT_TRANSCRIPTOME {
 
-    maxForks 1
-
     publishDir "${params.resultsDir}/wt-syn-transcriptome/", mode: 'copy', overwrite: true
 
     input:
@@ -164,6 +184,7 @@ process GFFREAD_GET_WT_TRANSCRIPTOME {
             -o wt-syn-transcriptome.gff \\
             -w wt-syn-transcriptome.fa \\
             -v \\
+            -C \\
             ${annotation_gff}
     """
 
@@ -176,8 +197,6 @@ process GFFREAD_GET_WT_TRANSCRIPTOME {
 }
 
 process SALMON_INDEX {
-
-    maxForks 1
 
     input: 
         path(transcriptome)
@@ -213,8 +232,6 @@ process SALMON_INDEX {
 process SALMON_QUANT {
 
     tag "${sample}"
-
-    maxForks 1
 
     publishDir "${params.resultsDir}/salmon-quant/", mode: 'copy', overwrite: true
 
@@ -311,15 +328,12 @@ workflow {
                     .splitCsv(header: true)
                     .map{ record -> tuple(record.Sample, file(record.read1), file(record.read2)) }
 
-    // // build reference
-    // BUILD_REFERENCE_TRANSCRIPTOME(file(params.reference.wt), file(params.reference.syn), file(params.annotation.wt), file(params.annotation.syn))
-
-    // // preprocess reads
-    // TRIM_READS(samples_ch)
+    // preprocess reads
+    TRIM_READS(samples_ch)
 
     // perform alignment
-    // GENERATE_GENOME_INDEX(file(params.genome.reference), file(params.genome.annotation))
-    // ALIGN_READS(GENERATE_GENOME_INDEX.out, TRIM_READS.out.fastq)
+    GENERATE_GENOME_INDEX(file(params.genome.reference), file(params.genome.annotation))
+    ALIGN_READS(GENERATE_GENOME_INDEX.out, TRIM_READS.out.fastq)
 
     // generate transcriptome fasta
     GFFREAD_GET_WT_TRANSCRIPTOME(file(params.genome.reference), file(params.genome.annotation))
@@ -327,8 +341,8 @@ workflow {
     // create transcriptome index
     SALMON_INDEX(GFFREAD_GET_WT_TRANSCRIPTOME.out.transcriptome, file(params.genome.reference))
 
-    // // estimate transcript level abundance
-    // SALMON_QUANT(SALMON_INDEX.out, TRIM_READS.out.fastq)
+    // estimate transcript level abundance
+    SALMON_QUANT(SALMON_INDEX.out, TRIM_READS.out.fastq)
 
 }
 
