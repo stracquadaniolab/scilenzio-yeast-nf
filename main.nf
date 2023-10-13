@@ -112,7 +112,8 @@ process GENERATE_GENOME_INDEX {
 
     script:
     """
-        mkdir genome-index
+        mkdir -p genome-index
+
         STAR \\
             --runThreadN ${task.cpus} \\
             --runMode genomeGenerate \\
@@ -120,12 +121,14 @@ process GENERATE_GENOME_INDEX {
             --genomeFastaFiles ${genome_fasta} \\
             --sjdbGTFfile ${annotation_gff} \\
             --sjdbOverhang ${params.star.sjdbOverhang} \\
-            --genomeSAindexNbases ${params.star.genomeSAindexNbases}
+            --genomeSAindexNbases ${params.star.genomeSAindexNbases} \\
+            --sjdbGTFfeatureExon ${params.star.sjdbGTFfeatureExon} \\
+            --sjdbGTFtagExonParentTranscript ${params.star.sjdbGTFtagExonParentTranscript}
     """
 
     stub:
     """
-        mkdir genome-index
+        mkdir -p genome-index
     """
 
 }
@@ -162,6 +165,39 @@ process ALIGN_READS {
         touch ${sample}.Aligned.sortedByCoord.out.bam
     """
     
+}
+
+process QUANTIFY_READS {
+
+    publishDir "${params.resultsDir}/featureCounts/${sample}/", mode: 'copy', overwrite: true
+
+    tag "${sample}"
+
+    input:
+        path(annotation_gtf)
+        tuple val(sample), path(bam_file)
+
+    output:
+        tuple val(sample), path("${sample}.featureCounts.txt"), path("${sample}.featureCounts.txt.summary")
+
+    script:
+    """
+        featureCounts \\
+            -T ${task.cpus} \\
+            -p \\
+            -t ${params.featureCounts.type.feature} \\
+            -g ${params.featureCounts.type.attribute} \\
+            -a ${annotation_gtf} \\
+            -o ${sample}.featureCounts.txt \\
+            ${bam_file}
+    """
+
+    stub:
+    """
+        touch ${sample}.featureCounts.txt
+        touch ${sample}.featureCounts.txt.summary
+    """
+
 }
 
 
@@ -215,11 +251,11 @@ process SALMON_INDEX {
         cat ${transcriptome} ${genome} > gentrome.fa.gz
 
         salmon index \\
+            ${params.salmon.index.args} \\
             --threads ${task.cpus} \\
             --transcripts gentrome.fa.gz \\
             --decoys decoys.txt \\
-            --index transcriptome-index \\
-            ${params.salmon.index.args}
+            --index transcriptome-index
     """
 
     stub:
@@ -245,13 +281,13 @@ process SALMON_QUANT {
     script:
     """
         salmon quant \\
+            ${params.salmon.quant.args} \\
             --threads ${task.cpus} \\
             --libType ${params.salmon.quant.libtype} \\
             --index ${transcriptome_index} \\
             --mates1 ${read1} \\
             --mates2 ${read2} \\
-            --output ${sample} \\
-            ${params.salmon.quant.args}
+            --output ${sample}
     """
 
     stub:
@@ -260,65 +296,65 @@ process SALMON_QUANT {
     """
 }
 
-process SUMMARIZE_TO_GENE {
+// process SUMMARIZE_TO_GENE {
 
-    publishDir "${params.resultsDir}/tximport/", mode: 'copy', overwrite: true
+//     publishDir "${params.resultsDir}/tximport/", mode: 'copy', overwrite: true
 
-    input:
-        path(sample_sheet)
-        path(annotation_gff)
-        path(salmon_results, stageAs: 'salmon-quant/quant*.sf')
+//     input:
+//         path(sample_sheet)
+//         path(annotation_gff)
+//         path(salmon_results, stageAs: 'salmon-quant/quant*.sf')
 
-    output:
-        path("txi-summarized-experiment.rds")
+//     output:
+//         path("txi-summarized-experiment.rds")
 
-    script:
-    """
-        summarize-to-gene.R \\
-            ${sample_sheet} \\
-            --gff ${annotation_gff} \\
-            --quant-dir ${salmon_results} \\
-            --counts-from-abundance ${params.summarize_to_gene.counts_from_abundance} \\
-            --output txi-summarized-experiment.rds
-    """
+//     script:
+//     """
+//         summarize-to-gene.R \\
+//             ${sample_sheet} \\
+//             --gff ${annotation_gff} \\
+//             --quant-dir ${salmon_results} \\
+//             --counts-from-abundance ${params.summarize_to_gene.counts_from_abundance} \\
+//             --output txi-summarized-experiment.rds
+//     """
 
-    stub:
-    """
-        touch txi-summarized-experiment.rds 
-    """
+//     stub:
+//     """
+//         touch txi-summarized-experiment.rds 
+//     """
 
-}
+// }
 
-// TODO
-process ANALYSIS_DGE {
+// // TODO
+// process ANALYSIS_DGE {
     
-    tag "${contrast1}-vs-${contrast2}"
+//     tag "${contrast1}-vs-${contrast2}"
 
-    publishDir "${params.resultsDir}/analysis/", mode: 'copy', overwrite: true
+//     publishDir "${params.resultsDir}/analysis/", mode: 'copy', overwrite: true
 
-    input: 
-        path sefile
-        tuple val(contrast1), val(contrast2)
+//     input: 
+//         path sefile
+//         tuple val(contrast1), val(contrast2)
 
-    output:
-        tuple path("dge-${contrast1}-vs-${contrast2}.csv"), val(contrast1), val(contrast2)
+//     output:
+//         tuple path("dge-${contrast1}-vs-${contrast2}.csv"), val(contrast1), val(contrast2)
     
-    script:
-    """
-        quick-rnaseq-dge.R \\
-            ${sefile} \\
-            dge-${contrast1}-vs-${contrast2}.csv \\
-            --case ${contrast1} \\
-            --control ${contrast2} \\
-            -l ${params.dge.lfc_threshold} \\
-            -f ${params.dge.fdr}
-    """
+//     script:
+//     """
+//         quick-rnaseq-dge.R \\
+//             ${sefile} \\
+//             dge-${contrast1}-vs-${contrast2}.csv \\
+//             --case ${contrast1} \\
+//             --control ${contrast2} \\
+//             -l ${params.dge.lfc_threshold} \\
+//             -f ${params.dge.fdr}
+//     """
 
-    stub:
-    """
-    touch dge-${contrast1}-vs-${contrast2}.csv
-    """
-}
+//     stub:
+//     """
+//     touch dge-${contrast1}-vs-${contrast2}.csv
+//     """
+// }
 
 workflow {
 
@@ -332,8 +368,8 @@ workflow {
     TRIM_READS(samples_ch)
 
     // perform alignment
-    GENERATE_GENOME_INDEX(file(params.genome.reference), file(params.genome.annotation))
-    ALIGN_READS(GENERATE_GENOME_INDEX.out, TRIM_READS.out.fastq)
+    // GENERATE_GENOME_INDEX(file(params.genome.reference), file(params.genome.annotation))
+    // ALIGN_READS(GENERATE_GENOME_INDEX.out, TRIM_READS.out.fastq)
 
     // generate transcriptome fasta
     GFFREAD_GET_WT_TRANSCRIPTOME(file(params.genome.reference), file(params.genome.annotation))
@@ -346,9 +382,29 @@ workflow {
 
 }
 
-workflow ANALYSIS {
+workflow ALTERNATIVE {
 
-    // summarise transcript-level abundance estimates to gene level
-    SUMMARIZE_TO_GENE(file(params.samplesheet), file(params.summarize_to_gene.annotation), file(params.summarize_to_gene.quant_dir))
+    // sample channels
+    samplesheet_file = file(params.samplesheet)
+    samples_ch = channel.from(samplesheet_file)
+                    .splitCsv(header: true)
+                    .map{ record -> tuple(record.Sample, file(record.read1), file(record.read2)) }
+
+    // preprocess reads
+    TRIM_READS(samples_ch)
+
+    // perform alignment
+    GENERATE_GENOME_INDEX(file(params.genome.reference), file(params.genome.annotation))
+    // ALIGN_READS(file(params.star.generate_genome_index), TRIM_READS.out.fastq)
+
+    // // quantify transcripts
+    // QUANTIFY_READS(file(params.genome.annotation), ALIGN_READS.out)
 
 }
+
+// workflow ANALYSIS {
+
+//     // summarise transcript-level abundance estimates to gene level
+//     SUMMARIZE_TO_GENE(file(params.samplesheet), file(params.summarize_to_gene.annotation), file(params.summarize_to_gene.quant_dir))
+
+// }

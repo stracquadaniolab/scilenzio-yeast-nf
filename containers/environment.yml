@@ -24,6 +24,7 @@ dependencies:
   - bioconda::salmon
   - bioconda::seqkit
   - bioconda::gffread
+  - bioconda::subread
   - bioconda::bioconductor-tximport
   - bioconda::bioconductor-genomicfeatures
   - bioconda::bioconductor-deseq2
