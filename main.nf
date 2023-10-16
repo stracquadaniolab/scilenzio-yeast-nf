@@ -103,6 +103,8 @@ process GENERATE_GENOME_INDEX {
 
     tag "genome_index"
 
+    publishDir "${params.resultsDir}/index", pattern: "genome-index", mode: 'copy', overwrite: true
+
     input:
         path(genome_fasta)
         path(annotation_gff)
@@ -112,18 +114,14 @@ process GENERATE_GENOME_INDEX {
 
     script:
     """
-        mkdir -p genome-index
-
-        STAR \\
+        mkdir -p genome-index \
+        && STAR \\
             --runThreadN ${task.cpus} \\
             --runMode genomeGenerate \\
             --genomeDir genome-index \\
             --genomeFastaFiles ${genome_fasta} \\
-            --sjdbGTFfile ${annotation_gff} \\
-            --sjdbOverhang ${params.star.sjdbOverhang} \\
-            --genomeSAindexNbases ${params.star.genomeSAindexNbases} \\
-            --sjdbGTFfeatureExon ${params.star.sjdbGTFfeatureExon} \\
-            --sjdbGTFtagExonParentTranscript ${params.star.sjdbGTFtagExonParentTranscript}
+            --genomeSAindexNbases ${params.star.genomeSAindexNbases} 
+            #
     """
 
     stub:
@@ -185,8 +183,8 @@ process QUANTIFY_READS {
         featureCounts \\
             -T ${task.cpus} \\
             -p \\
-            -t ${params.featureCounts.type.feature} \\
-            -g ${params.featureCounts.type.attribute} \\
+            -t 'gene'\\
+            -g 'ID' \\
             -a ${annotation_gtf} \\
             -o ${sample}.featureCounts.txt \\
             ${bam_file}
@@ -395,10 +393,10 @@ workflow ALTERNATIVE {
 
     // perform alignment
     GENERATE_GENOME_INDEX(file(params.genome.reference), file(params.genome.annotation))
-    // ALIGN_READS(file(params.star.generate_genome_index), TRIM_READS.out.fastq)
+    ALIGN_READS(GENERATE_GENOME_INDEX.out, TRIM_READS.out.fastq)
 
     // // quantify transcripts
-    // QUANTIFY_READS(file(params.genome.annotation), ALIGN_READS.out)
+    QUANTIFY_READS(file(params.genome.annotation), ALIGN_READS.out)
 
 }
 
