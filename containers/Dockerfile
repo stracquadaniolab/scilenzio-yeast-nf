@@ -22,7 +22,7 @@ LABEL org.opencontainers.image.documentation="https://github.com/stracquadaniola
 LABEL org.opencontainers.image.source="https://github.com/stracquadaniolab/scilenzio-yeast-nf"
 LABEL org.opencontainers.image.vendor="stracquadaniolab"
 LABEL org.opencontainers.image.authors="Anima Sutradhar"
-LABEL org.opencontainers.image.revision="v0.5.2"
+LABEL org.opencontainers.image.revision="v0.6.0"
 
 COPY --chown=micromamba:micromamba ${CONDA_FILE} /tmp
 RUN micromamba install -y -n base -f /tmp/`basename ${CONDA_FILE}` && \
