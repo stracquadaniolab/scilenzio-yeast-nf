@@ -1,9 +1,9 @@
 #!/usr/bin/env Rscript
 
-"split-salmon.R
+"scilenzio-split-salmon.R
 
 Usage:
-    split-salmon.R [<inputfile>] [--quant-dir=<quant_dir>] [--gff=<gff>] [--output=<output>] 
+    scilenzio-split-salmon.R [<inputfile>] [--quant-dir=<quant_dir>] [--gff=<gff>] [--output=<output>] 
     
 Options:
     --gff=<gff>                             GFF file used to get genes in synthetic strain.
@@ -15,7 +15,7 @@ Options:
 
 # parsing command line arguments
 suppressMessages(library(docopt))
-arguments <- docopt(doc, version = "split-salmon.R")
+arguments <- docopt(doc, version = "scilenzio-split-salmon.R")
 
 # load required packages
 message(">>> Loading packages.")

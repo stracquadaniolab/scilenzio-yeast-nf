@@ -1,9 +1,9 @@
 #!/usr/bin/env Rscript
 
-"summarize-to-gene.R
+"scilenzio-summarize-to-gene.R
 
 Usage:
-    summarize-to-gene.R [<inputfile>] [--gff=<gff>] [--quant-dir=<quant_dir>] [--counts-from-abundance=<counts_model>] [--output=<output>] 
+    scilenzio-summarize-to-gene.R [<inputfile>] [--gff=<gff>] [--quant-dir=<quant_dir>] [--counts-from-abundance=<counts_model>] [--output=<output>] 
     
 Options:
     --gff=<gff>                             GFF file used to count transcripts.
@@ -17,7 +17,7 @@ Options:
 
 # parsing command line arguments
 suppressMessages(library(docopt))
-arguments <- docopt(doc, version = "summarize-to-gene.R")
+arguments <- docopt(doc, version = "scilenzio-summarize-to-gene.R")
 
 # load required packages
 message(">>> Loading packages.")

@@ -294,34 +294,36 @@ process SALMON_QUANT {
     """
 }
 
-// process SUMMARIZE_TO_GENE {
+process SUMMARIZE_TO_GENE {
 
-//     publishDir "${params.resultsDir}/tximport/", mode: 'copy', overwrite: true
+    // This process is if using salmon results as quantification output
 
-//     input:
-//         path(sample_sheet)
-//         path(annotation_gff)
-//         path(salmon_results, stageAs: 'salmon-quant/quant*.sf')
+    publishDir "${params.resultsDir}/tximport/", mode: 'copy', overwrite: true
 
-//     output:
-//         path("txi-summarized-experiment.rds")
+    input:
+        path(sample_sheet)
+        path(annotation_gff)
+        path(salmon_results, stageAs: 'salmon-quant/quant*.sf')
 
-//     script:
-//     """
-//         summarize-to-gene.R \\
-//             ${sample_sheet} \\
-//             --gff ${annotation_gff} \\
-//             --quant-dir ${salmon_results} \\
-//             --counts-from-abundance ${params.summarize_to_gene.counts_from_abundance} \\
-//             --output txi-summarized-experiment.rds
-//     """
+    output:
+        path("txi-summarized-experiment.rds")
 
-//     stub:
-//     """
-//         touch txi-summarized-experiment.rds 
-//     """
+    script:
+    """
+        summarize-to-gene.R \\
+            ${sample_sheet} \\
+            --gff ${annotation_gff} \\
+            --quant-dir ${salmon_results} \\
+            --counts-from-abundance ${params.summarize_to_gene.counts_from_abundance} \\
+            --output txi-summarized-experiment.rds
+    """
 
-// }
+    stub:
+    """
+        touch txi-summarized-experiment.rds 
+    """
+
+}
 
 // // TODO
 // process ANALYSIS_DGE {
@@ -353,6 +355,64 @@ process SALMON_QUANT {
 //     touch dge-${contrast1}-vs-${contrast2}.csv
 //     """
 // }
+
+process GET_FEATURECOUNTS_TPM {
+
+    publishDir "${params.resultsDir}/featureCounts-tpm/", mode: 'copy', overwrite: true
+
+    tag "${sample}"
+
+    input:
+        path(gff)
+        tuple val(sample), path(featurecounts_file)
+
+    output:
+        tuple val(sample), path("${sample}.featureCounts-tpm.txt")
+
+    script:
+    """
+        scilenzio-featurecounts-tpm.R ${featurecounts_file} \\
+            --gff ${gff} \\
+            --output ${sample}.featureCounts-tpm.txt
+    """
+
+    stub:
+    """
+        touch ${sample}.featureCounts-tpm.txt
+    """
+
+}
+
+process SUMMARIZE_TO_GENE_FEATURECOUNTS {
+
+    // This process is if using featurecounts results as quantification output
+
+    publishDir "${params.resultsDir}/featurecounts-txi/", mode: 'copy', overwrite: true
+
+    input:
+        path(samplesheet)
+        path(gff)
+        path(featurecounts_tpm_dir)
+
+    output:
+        path("txi-featurecounts-summarized-experiment.rds")
+
+    script:
+    """
+        scilenzio-summarise-to-gene-featurecounts.R \\
+            --samplesheet ${samplesheet} \\
+            --gff ${gff} \\
+            --featurecounts-tpm-dir ${featurecounts_tpm_dir} \\
+            --counts-from-abundance ${params.summarize_to_gene_featurecounts.counts_from_abundance} \\
+            --output txi-featurecounts-summarized-experiment.rds
+    """
+
+    stub:
+    """
+        touch txi-featurecounts-summarized-experiment.rds
+    """
+
+}
 
 workflow {
 
@@ -395,14 +455,25 @@ workflow ALTERNATIVE {
     GENERATE_GENOME_INDEX(file(params.genome.reference), file(params.genome.annotation))
     ALIGN_READS(GENERATE_GENOME_INDEX.out, TRIM_READS.out.fastq)
 
-    // // quantify transcripts
+    // quantify transcripts
     QUANTIFY_READS(file(params.genome.annotation), ALIGN_READS.out)
 
 }
 
-// workflow ANALYSIS {
+workflow ANALYSIS {
 
-//     // summarise transcript-level abundance estimates to gene level
-//     SUMMARIZE_TO_GENE(file(params.samplesheet), file(params.summarize_to_gene.annotation), file(params.summarize_to_gene.quant_dir))
+    // construct path to featurecounts files using sample IDs from samplesheet file
+    featurecounts_ch = Channel
+        .fromPath(params.samplesheet, checkIfExists: true)
+        .splitCsv(header: true)
+        .map { record ->
+            tuple(record.Sample, file(params.featurecounts_dir + "/" + record.Sample + "/" + record.Sample + ".featureCounts.txt", checkIfExists: true))
+        }
 
-// }
+    // get TPMs
+    GET_FEATURECOUNTS_TPM(file(params.genome.annotation), featurecounts_ch)
+
+    // summarise transcript-level abundance estimates to gene level
+    SUMMARIZE_TO_GENE_FEATURECOUNTS(file(params.samplesheet), file(params.genome.annotation), file(params.summarize_to_gene.featurecounts_quant_dir))
+
+}

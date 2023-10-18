@@ -16,16 +16,16 @@ dependencies:
   - bioconda::seqkit
   - bioconda::gffread
   - bioconda::subread
-  # - conda-forge::r-base>=4.3.1
-  # - conda-forge::r-tidyverse
-  # - conda-forge::r-rlang>=1.1.0
-  # - conda-forge::r-dplyr
-  # - conda-forge::r-docopt
-  # - conda-forge::r-cowplot
-  # - conda-forge::r-paletteer
-  # - conda-forge::r-ggrepel
-  # - conda-forge::gsl # needed to install bcftools correctly
-  # - bioconda::bioconductor-tximport
-  # - bioconda::bioconductor-genomicfeatures
-  # - bioconda::bioconductor-deseq2
-  # - bioconda::bioconductor-rtracklayer
+  - conda-forge::r-base>=4.3.1
+  - conda-forge::r-tidyverse
+  - conda-forge::r-rlang>=1.1.0
+  - conda-forge::r-dplyr
+  - conda-forge::r-docopt
+  - conda-forge::r-cowplot
+  - conda-forge::r-paletteer
+  - conda-forge::r-ggrepel
+  - conda-forge::gsl # needed to install bcftools correctly
+  - bioconda::bioconductor-tximport
+  - bioconda::bioconductor-genomicfeatures
+  - bioconda::bioconductor-deseq2
+  - bioconda::bioconductor-rtracklayer
