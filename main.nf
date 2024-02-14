@@ -120,8 +120,7 @@ process GENERATE_GENOME_INDEX {
             --runMode genomeGenerate \\
             --genomeDir genome-index \\
             --genomeFastaFiles ${genome_fasta} \\
-            --genomeSAindexNbases ${params.star.genomeSAindexNbases} 
-            #
+            --genomeSAindexNbases ${params.star.genomeSAindexNbases}
     """
 
     stub:
@@ -153,6 +152,7 @@ process ALIGN_READS {
             --readFilesCommand zcat \\
             --outFileNamePrefix ${sample}. \\
             --outSAMtype BAM SortedByCoordinate \\
+            --outSAMunmapped Within \\
             --alignIntronMax ${params.star.alignIntronMax} \\
             --limitBAMsortRAM ${params.star.limitBAMsortRAM} \\
             --outBAMsortingBinsN ${params.star.outBAMsortingBinsN}
@@ -426,8 +426,11 @@ workflow {
     TRIM_READS(samples_ch)
 
     // perform alignment
-    // GENERATE_GENOME_INDEX(file(params.genome.reference), file(params.genome.annotation))
-    // ALIGN_READS(GENERATE_GENOME_INDEX.out, TRIM_READS.out.fastq)
+    GENERATE_GENOME_INDEX(file(params.genome.reference), file(params.genome.annotation))
+    ALIGN_READS(GENERATE_GENOME_INDEX.out, TRIM_READS.out.fastq)
+
+    // quantify transcripts
+    QUANTIFY_READS(file(params.genome.annotation), ALIGN_READS.out)
 
     // generate transcriptome fasta
     GFFREAD_GET_WT_TRANSCRIPTOME(file(params.genome.reference), file(params.genome.annotation))

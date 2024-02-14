@@ -4,19 +4,19 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
-  - git
   - python>=3.8
   - docopt
+  - git
   - bioconda::fastp
   - bioconda::star=2.7.0
   - bioconda::samtools
   - bioconda::bcftools
   - bioconda::bedtools
-  - bioconda::salmon
+  - bioconda::salmon>=1.10.1
   - bioconda::seqkit
   - bioconda::gffread
   - bioconda::subread
-  - conda-forge::r-base>=4.3.1
+  # - conda-forge::r-base>=4.3.2
   - conda-forge::r-tidyverse
   - conda-forge::r-rlang>=1.1.0
   - conda-forge::r-dplyr

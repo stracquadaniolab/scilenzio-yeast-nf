@@ -15,3 +15,4 @@ testdata/salmon-quant
 testdata/split-salmon-quant
 testdata/syn-transcriptome.gff
 data/genome/wt-syn-chr11-genome
+data/bams
